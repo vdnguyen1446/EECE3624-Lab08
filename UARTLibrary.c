@@ -21,7 +21,7 @@
 #include <avr/io.h>
 #include "UARTLibrary.h"
 
-// Use USART1_init to initialize the USART hardware in the AVR processor.
+// Wei: Use uart_init to initialize the USART1 hardware in the AVR processor.
 // The function takes the following arguments:
 //    - desired baud rate (standard values from 2400 to 115200),
 //    - number of databits (5-8),
@@ -30,15 +30,19 @@
 // No error checking is performed and the function does not return a value.
 //
 // For example,
-//     usart1_init(9600,8,1,0);
+// Wei: Example call: uart_init(9600, 8, 1, 0).
 // sets the baudrate to 9600, with 8 data bits, 1 stop bit, and no parity
 void uart_init(long unsigned int baudrate, unsigned char databits, unsigned char stopbits, unsigned char parity) {
     /* your code here */
-	// set baud rate (via UBRR0 high and low registers)
-	#define F_OSC 7372800
-	unsigned long UBRR = ((F_OSC/(16*baudrate)) - 1);
+	// Wei: Use the requested baud rate and the shared oscillator definition.
+	unsigned long UBRR = (F_OSC / (16UL * baudrate)) - 1UL;
 	UBRR1H = (unsigned char)(UBRR >> 8);
-	UBRR1L = (unsigned char)(UBRR);
+	UBRR1L = (unsigned char)UBRR;
+
+	// Wei: Clear stale settings before applying the requested frame format.
+	UCSR1A = 0;
+	UCSR1B = 0;
+	UCSR1C = 0;
     
 	// set databits; defaults to 5 databits if not the others
 	if(databits == 6){
@@ -48,13 +52,13 @@ void uart_init(long unsigned int baudrate, unsigned char databits, unsigned char
 		UCSR1C |= (1 << UCSZ11);
 	}
 	if(databits == 8){
-		UCSR1C |= (1 << UCSZ10) || (1 << UCSZ11);
+		UCSR1C |= (1 << UCSZ10) | (1 << UCSZ11);
 	}
 
 
 	// set parity; defaults to no parity if not the others
     if(parity == 1){
-		UCSR1C |= (1 << UPM11) || (1 << UPM10);
+		UCSR1C |= (1 << UPM11) | (1 << UPM10);
 	}
 	if(parity == 2){
 		UCSR1C |= (1 << UPM11);

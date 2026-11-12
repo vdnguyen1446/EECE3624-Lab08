@@ -53,7 +53,7 @@
 #define UARTLIBRARY_H_
 
 // Set default oscillator frequency for ATmega128A (7.3728 MHz)
-#define F_OSC 7372800
+#define F_OSC 7372800UL
 
 // function prototypes
 void uart_init(long unsigned int baudrate, unsigned char databits, unsigned char stopbits, unsigned char parity);
