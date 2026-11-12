@@ -28,10 +28,10 @@
 #include <util/delay.h>
 #include "UARTLibrary.h"  // Double quotes for local library.
 
-#define BAUDRATE 9600; // standard values from 1200 to 115200
-#define DATABITS    8; // 5-8
-#define STOPBITS    1; // 1,2
-#define PARITY      0; // 0=none, 1=odd, 2=even
+#define BAUDRATE 9600 // standard values from 1200 to 115200
+#define DATABITS    8 // 5-8
+#define STOPBITS    1 // 1,2
+#define PARITY      0 // 0=none, 1=odd, 2=even
 
 /* Your code here.  */
 void TransmitArray(const char *array);
@@ -40,7 +40,7 @@ void StartUp(void);
 int main(void)
 {
 	// Initialization
-	DDRC = (1 << DDC0);
+	DDRC |= (1 << DDC0);
 	long unsigned int BaudRate = BAUDRATE;
 	unsigned char DataBits = DATABITS;
 	unsigned char StopBits = STOPBITS;
@@ -72,22 +72,27 @@ int main(void)
 		
 		c = uart_rx();
 		if(c != 0){
-			if(c == '\r'){    // If '\r' is detected, also start a new line
+			if(c == CR){    // If '\r' is detected, also start a new line
+				// Wei: A line break interrupts the contiguous command sequence.
+				count = 0;
 				uart_tx(c);
-				uart_tx('\n');
+				uart_tx(LF);
 			}
-			else if(c == '\x1b'){   // If ESc is detected, redo the start up screen
+			else if(c == ESC){   // If ESC is detected, redo the start up screen
+				// Wei: Reset command progress when starting over from the banner.
+				count = 0;
 				StartUp();
 			}
-			else if(count == 0 && c == 'e'){
+			else if(c == 'e' || c == 'E'){
+				// Wei: Start or restart the command match on either case of E.
 				count = 1;
 				uart_tx(c);
 			}
-			else if(count == 1 && c == 'n'){
+			else if(count == 1 && (c == 'n' || c == 'N')){
 				count = 2;
 				uart_tx(c);
 			}
-			else if(count == 2 && c == 'd'){
+			else if(count == 2 && (c == 'd' || c == 'D')){
 				
 				// End Detected, GoodBye
 				uart_tx(c);
@@ -103,8 +108,8 @@ int main(void)
 				uart_tx(c);
 				count = 0;
 			}
-			// LED0 Flash
-			PORTC &= (0 << PORTC0);
+			// Wei: Clear only the active-low LED pin, preserving other PORTC bits.
+			PORTC &= ~(1 << PORTC0);
 			_delay_ms(75);
 			PORTC |= (1 << PORTC0);
 		}
